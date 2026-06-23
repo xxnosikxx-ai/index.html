@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hit Game Deluxe</title>
+
+<style>
+body{
+    margin:0;
+    overflow:hidden;
+    background:radial-gradient(circle,#222,#000);
+    font-family:Arial,sans-serif;
+    color:white;
+}
+
+#ui{
+    position:absolute;
+    top:10px;
+    left:10px;
+    z-index:100;
+    background:rgba(0,0,0,0.4);
+    padding:10px;
+    border-radius:10px;
+}
+
+#game{
+    width:100vw;
+    height:100vh;
+    position:relative;
+}
+
+#target{
+    width:320px;
+    position:absolute;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    cursor:pointer;
+    user-select:none;
+    transition:.1s;
+    filter:drop-shadow(0 0 20px red);
+}
+
+#target:hover{
+    transform:translate(-50%,-50%) scale(1.05);
+}
+
+.particle{
+    position:absolute;
+    width:10px;
+    height:10px;
+    border-radius:50%;
+    background:red;
+    pointer-events:none;
+}
+
+.floatingText{
+    position:absolute;
+    font-weight:bold;
+    pointer-events:none;
+    text-shadow:0 0 10px black;
+}
+
+#victory{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.9);
+    display:none;
+    justify-content:center;
+    align-items:center;
+    flex-direction:column;
+    z-index:999;
+}
+
+button{
+    padding:10px 20px;
+    font-size:18px;
+    cursor:pointer;
+}
+</style>
+</head>
+<body>
+
+<div id="ui">
+    <h2>❤️ HP: <span id="hp">1000</span></h2>
+    <h3>👊 Удары: <span id="hits">0</span></h3>
+    <h3>💰 Монеты: <span id="coins">0</span></h3>
+    <h3>⭐ Уровень: <span id="level">1</span></h3>
+    <h3>🔥 Комбо: <span id="combo">0</span></h3>
+</div>
+
+<div id="game">
+    <img id="target" src="c8a67fb1-7a61-472b-87d0-1aff4eebb56d.jpg">
+</div>
+
+<div id="victory">
+    <h1>🏆 Победа!</h1>
+    <h2>Персонаж побежден</h2>
+    <button onclick="location.reload()">Играть снова</button>
+</div>
+
+<script>
+
+let hp = 1000;
+let hits = 0;
+let coins = 0;
+let level = 1;
+let damage = 1;
+let combo = 0;
+
+const target = document.getElementById("target");
+
+const hpText = document.getElementById("hp");
+const hitsText = document.getElementById("hits");
+const coinsText = document.getElementById("coins");
+const levelText = document.getElementById("level");
+const comboText = document.getElementById("combo");
+
+function updateUI(){
+    hpText.textContent = Math.max(hp,0);
+    hitsText.textContent = hits;
+    coinsText.textContent = coins;
+    levelText.textContent = level;
+    comboText.textContent = combo;
+}
+
+function showText(text,x,y,color){
+
+    let div=document.createElement("div");
+
+    div.className="floatingText";
+    div.textContent=text;
+    div.style.left=x+"px";
+    div.style.top=y+"px";
+    div.style.color=color;
+
+    document.body.appendChild(div);
+
+    div.animate([
+        {transform:"translateY(0)",opacity:1},
+        {transform:"translateY(-80px)",opacity:0}
+    ],{
+        duration:1000
+    });
+
+    setTimeout(()=>div.remove(),1000);
+}
+
+target.addEventListener("click",e=>{
+
+    if(hp<=0) return;
+
+    hits++;
+    combo++;
+
+    let hitDamage = damage;
+
+    if(Math.random()<0.1){
+
+        hitDamage*=5;
+
+        showText(
+            "💥 КРИТ! "+hitDamage,
+            e.pageX,
+            e.pageY,
+            "gold"
+        );
+
+    }else{
+
+        showText(
+            "-"+hitDamage,
+            e.pageX,
+            e.pageY,
+            "red"
+        );
+    }
+
+    hp-=hitDamage;
+
+    coins+=hitDamage;
+
+    if(coins>=level*100){
+
+        level++;
+        damage++;
+
+        showText(
+            "⭐ LEVEL UP!",
+            window.innerWidth/2,
+            200,
+            "lime"
+        );
+    }
+
+    updateUI();
+
+    target.style.transform=
+    "translate(-50%,-50%) rotate("+
+    (Math.random()*20-10)+
+    "deg) scale(1.05)";
+
+    setTimeout(()=>{
+        target.style.transform=
+        "translate(-50%,-50%)";
+    },100);
+
+    for(let i=0;i<20;i++){
+
+        let p=document.createElement("div");
+        p.className="particle";
+
+        p.style.left=e.pageX+"px";
+        p.style.top=e.pageY+"px";
+
+        document.body.appendChild(p);
+
+        let dx=(Math.random()-0.5)*300;
+        let dy=(Math.random()-0.5)*300;
+
+        p.animate([
+            {
+                transform:"translate(0,0)",
+                opacity:1
+            },
+            {
+                transform:`translate(${dx}px,${dy}px)`,
+                opacity:0
+            }
+        ],{
+            duration:700
+        });
+
+        setTimeout(()=>p.remove(),700);
+    }
+
+    if(hp<=0){
+
+        hp=0;
+        updateUI();
+
+        target.style.transition="1.5s";
+
+        target.style.transform=
+        "translate(-50%,700px) rotate(1080deg)";
+
+        setTimeout(()=>{
+            document.getElementById("victory").style.display="flex";
+        },1500);
+    }
+
+});
+
+updateUI();
+
+</script>
+
+</body>
+</html>
